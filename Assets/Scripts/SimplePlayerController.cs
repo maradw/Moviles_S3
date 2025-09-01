@@ -38,11 +38,16 @@ public class SimplePlayerController : NetworkBehaviour
     }
     private void FixedUpdate()
     {
+        //if (!IsOwner) return;
         Vector3 move = new Vector3(direction.x, 0f, direction.y) * _speed;
         myRBD.linearVelocity = new Vector3(move.x, myRBD.linearVelocity.y, move.z);
         CheckGroundRpc();
     }
-    [Rpc(SendTo.Server)]
+
+
+
+
+    [Rpc(SendTo.Server)]//not
     public void CheckGroundRpc()
     {
         RaycastHit hit;
