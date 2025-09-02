@@ -52,7 +52,7 @@ public class GameManager : NetworkBehaviour
     {
         Transform player = Instantiate(playerprefab);
         player.GetComponent<NetworkObject>().SpawnWithOwnership(ownerID, true);
-        RegisterPlayer(this.gameObject);
+        RegisterPlayer(player.gameObject);
 
     }
     void Update()

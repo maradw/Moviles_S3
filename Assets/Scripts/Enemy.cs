@@ -1,3 +1,44 @@
+using System.Linq;
+using Unity.Netcode;
+using UnityEngine;
+
+public class Enemy : NetworkBehaviour
+{
+    void Update()
+    {
+        if (!IsServer) return;
+
+        FollowPlayer();
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!IsServer) return;
+
+        if (other.CompareTag("Player"))
+        {
+            GetComponent<NetworkObject>().Despawn(true);
+        }
+    }
+
+    void FollowPlayer()
+    {
+        if (GameManager.Instance.Players == null || GameManager.Instance.Players.Count == 0) return;
+        var closest = GameManager.Instance.Players
+            .OrderBy(p => (p.transform.position - transform.position).sqrMagnitude) 
+            .FirstOrDefault();
+
+        if (closest != null)
+        {
+            transform.position = Vector3.MoveTowards(
+                transform.position,
+                closest.transform.position,
+                5f * Time.deltaTime
+            );
+        }
+    }
+}
+
 //using System.Linq;
 //using Unity.Netcode;
 //using UnityEngine;
@@ -54,47 +95,3 @@
 //    }
 
 //}
-using System.Linq;
-using Unity.Netcode;
-using UnityEngine;
-
-public class Enemy : NetworkBehaviour
-{
-    void Update()
-    {
-        // Solo el servidor mueve a los enemigos (importante para netcode)
-        if (!IsServer) return;
-
-        FollowPlayer();
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!IsServer) return;
-
-        if (other.CompareTag("Player"))
-        {
-            // El enemigo desaparece al colisionar con un jugador
-            GetComponent<NetworkObject>().Despawn(true);
-        }
-    }
-
-    void FollowPlayer()
-    {
-        if (GameManager.Instance.Players == null || GameManager.Instance.Players.Count == 0) return;
-
-        // Obtén el jugador más cercano usando LINQ
-        var closest = GameManager.Instance.Players
-            .OrderBy(p => (p.transform.position - transform.position).sqrMagnitude) // más rápido que Distance
-            .FirstOrDefault();
-
-        if (closest != null)
-        {
-            transform.position = Vector3.MoveTowards(
-                transform.position,
-                closest.transform.position,
-                5f * Time.deltaTime
-            );
-        }
-    }
-}
