@@ -14,17 +14,6 @@ public class SimplePlayerController : NetworkBehaviour
     [SerializeField]  bool canJump = false;
     [SerializeField] Transform firePoint;
     [SerializeField] GameObject projectilePrefab;
-
-   // private InputSystem_Actions action;
-
-    /* public void OnEnable()
-     {
-
-         action.Enable();
-         action.Player.Move.performed += OnMovePerformed;
-         action.Player.Move.canceled += OnMoveCanceled;
-         action.Player.Jump.performed += OnJump;
-     }*/
     Vector2 position;
     public void OnClick(InputAction.CallbackContext click)
     {
@@ -54,10 +43,6 @@ public class SimplePlayerController : NetworkBehaviour
             position = Mouse.current.position.ReadValue();
         }
         animator = GetComponent<Animator>();
-    }
-    private void Update()
-    {
-        
     }
     public void OnJump(InputAction.CallbackContext jump)
     {
@@ -120,8 +105,6 @@ public class SimplePlayerController : NetworkBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(mouseDirection);
         GameObject proj = Instantiate(projectilePrefab, firePoint.position, lookRotation);
         proj.GetComponent<NetworkObject>().Spawn(true);
-
-        //  proj.GetComponent<Rigidbody>().AddForce(Vector3.forward * 5, ForceMode.Impulse);
         Debug.DrawRay(proj.transform.position, proj.transform.forward * 5, Color.red, 2f);
     }
 
