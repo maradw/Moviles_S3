@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Enemy : NetworkBehaviour
 {
+    
+     [SerializeField] NetworkVariable<int> life = new NetworkVariable<int>(6);
     void Update()
     {
         if (!IsServer) return;
@@ -17,8 +19,23 @@ public class Enemy : NetworkBehaviour
 
         if (other.CompareTag("Player"))
         {
+          //  GetComponent<NetworkObject>().Despawn(true);
+        }
+
+        if (other.gameObject.tag == "bullet")
+        {
+            life.Value -= 1;
+        }
+        if (life.Value <= 0)
+        {
             GetComponent<NetworkObject>().Despawn(true);
         }
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (!IsServer) { }
+
+        
     }
 
     void FollowPlayer()

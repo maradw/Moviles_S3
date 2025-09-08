@@ -28,7 +28,7 @@ public class SimplePlayerController : NetworkBehaviour
     Vector2 position;
     public void OnClick(InputAction.CallbackContext click)
     {
-
+        if (!IsOwner) return;
         if (click.performed)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
