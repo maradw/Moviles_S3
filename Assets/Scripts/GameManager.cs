@@ -19,11 +19,6 @@ public class GameManager : NetworkBehaviour
 
 
     public List<GameObject> Players = new List<GameObject>();
-    void Start()
-    {
-        
-    }
-
     void Awake()
     {
         if(Instance == null)
@@ -36,20 +31,16 @@ public class GameManager : NetworkBehaviour
             Destroy(gameObject);
         }
     }
-    
-    //
     public override void OnNetworkSpawn()
     {
         print("CurrentPlayer" + NetworkManager.Singleton.ConnectedClients.Count);
         print(NetworkManager.Singleton.LocalClientId);
         
-        InstancePLayerRPC(NetworkManager.Singleton.LocalClientId);
-        
+        InstancePLayerRPC(NetworkManager.Singleton.LocalClientId); 
     }
-
     [Rpc(SendTo.Server)]
    public void InstancePLayerRPC(ulong ownerID)
-    {
+   {
         Transform player = Instantiate(playerprefab);
         player.GetComponent<NetworkObject>().SpawnWithOwnership(ownerID, true);
         RegisterPlayer(player.gameObject);
@@ -92,7 +83,5 @@ public class GameManager : NetworkBehaviour
     {
         Players.Add(player);
     }
-
-    
     public static GameManager Instance => instance;
 }
