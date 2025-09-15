@@ -7,13 +7,16 @@ public class Projectile : NetworkBehaviour
     Rigidbody rb;
     float velocity = 10;
     public static event Action OnEnemyCollision;
+   public int attackFromPlayer;
+    public static event Action<int> OnPlayerCollision;
     void Start()
     {
         if (IsServer)
         {
             rb.AddForce(transform.forward * velocity, ForceMode.Impulse);
             
-        }     
+        }    
+        Debug.Log("nose" + attackFromPlayer);
     }
     private void Awake()
     {
@@ -31,9 +34,9 @@ public class Projectile : NetworkBehaviour
         {
             SimpleDespawn();
         }
-        if (other.gameObject.tag == "enemy")
+        else if(other.gameObject.tag == "Player")
         {
-            OnEnemyCollision?.Invoke();
+            OnPlayerCollision?.Invoke(attackFromPlayer);
         }
     }
 }
