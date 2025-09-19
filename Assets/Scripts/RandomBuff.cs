@@ -3,7 +3,7 @@ using Unity.Netcode;
 using UnityEngine;
 public class RandomBuff : NetworkBehaviour
 {
-    public static event Action<int> OnBuffColLision;
+    public event Action<int> OnBuffColLision;
     [SerializeField] NetworkVariable<int> attackValue = new NetworkVariable<int>();
 
     

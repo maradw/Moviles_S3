@@ -8,7 +8,8 @@ public class Projectile : NetworkBehaviour
     float velocity = 10;
     public static event Action OnEnemyCollision;
    public int attackFromPlayer;
-    public static event Action<int> OnPlayerCollision;
+    public  event Action<int> OnPlayerCollision;
+    public GameObject shooter;
     void Start()
     {
         if (IsServer)
@@ -34,9 +35,14 @@ public class Projectile : NetworkBehaviour
         {
             SimpleDespawn();
         }
-        else if(other.gameObject.tag == "Player")
+        else if(other.gameObject.tag == "Player" )
         {
-            OnPlayerCollision?.Invoke(attackFromPlayer);
+            if(other.gameObject != shooter)
+            {
+                OnPlayerCollision?.Invoke(attackFromPlayer);
+                //SimpleDespawn();
+            }
+            //OnPlayerCollision?.Invoke(attackFromPlayer);
         }
     }
 }

@@ -160,6 +160,7 @@ public class SimplePlayerController : NetworkBehaviour
         Quaternion lookRotation = Quaternion.LookRotation(mouseDirection);
         GameObject proj = Instantiate(projectilePrefab, firePoint.position, lookRotation);
         proj.GetComponent<Projectile>().attackFromPlayer = attack.Value;
+        proj.GetComponent<Projectile>().shooter = this.gameObject;
         proj.GetComponent<NetworkObject>().Spawn(true);
         Debug.DrawRay(proj.transform.position, proj.transform.forward * 5, Color.red, 2f);
     }
