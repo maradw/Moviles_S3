@@ -19,6 +19,10 @@ public class SimplePlayerController : NetworkBehaviour
     Vector2 position;
     /* [SerializeField] NetworkVariable<int> life = new NetworkVariable<int>(100);
      [SerializeField] NetworkVariable<int> attack = new NetworkVariable<int>(20);*/
+
+
+
+    //life no se actualiza al momento de hacer respawn , lo cual ocasiona que se continue con el bucle de la corrutina
     public void OnClick(InputAction.CallbackContext click)
     {
         if (!IsOwner) return;
@@ -53,11 +57,27 @@ public class SimplePlayerController : NetworkBehaviour
     }
     void Start()
     {
+      //  health.Value = 100;
         if (Mouse.current != null)
         {
             position = Mouse.current.position.ReadValue();
         }
         animator = GetComponent<Animator>();
+        string id = accountID.Value.ToString();
+        if (GameManager.Instance.playerStatesByAccount.ContainsKey(id))
+        {
+            SetData(GameManager.Instance.playerStatesByAccount[id]);
+            // Si estaba muerto, inicia respawn
+            if (health.Value <= 0)
+            {
+                isDead = true;
+                StartCoroutine(ReSpawn());
+            }
+        }
+        else
+        {
+            SetData(new PlayerData(id, GetRandomSpawnPosition(), 100, 20));
+        }
     }
     public void OnJump(InputAction.CallbackContext jump)
     {
@@ -87,7 +107,7 @@ public class SimplePlayerController : NetworkBehaviour
         }
         
     }
-    void DamageRecieved(int damage)
+    public void DamageRecieved(int damage)
     {
         health.Value -= damage;
     }
@@ -96,32 +116,60 @@ public class SimplePlayerController : NetworkBehaviour
         attack.Value += buffAttack;
         Debug .Log("current" + attack.Value);
     }
-    private void OnEnable()
+    /* private void OnEnable()
+     {
+         RandomBuff.OnBuffColLision += BoostAttack;
+         Projectile.OnPlayerCollision += DamageRecieved;
+     }
+     private void OnDisable()
+     {
+         RandomBuff.OnBuffColLision -= BoostAttack;
+         Projectile.OnPlayerCollision -= DamageRecieved;
+     }*/
+    private void OnTriggerEnter(Collider other)
     {
-        RandomBuff.OnBuffColLision += BoostAttack;
-        Projectile.OnPlayerCollision += DamageRecieved;
+        RandomBuff buff = other.GetComponent<RandomBuff>();
+        if (buff != null)
+        {
+            BoostAttack(buff.GetAttackValue());
+            buff.TakeBuff(); // método para destruir el buff
+        }
+
+        Projectile proj = other.GetComponent<Projectile>();
+        if (proj != null)
+        {
+            proj.OnPlayerCollision += DamageRecieved;
+        }
     }
-    private void OnDisable()
+    private void OnTriggerExit(Collider other)
     {
-        RandomBuff.OnBuffColLision -= BoostAttack;
-        Projectile.OnPlayerCollision -= DamageRecieved;
+        RandomBuff buff = other.GetComponent<RandomBuff>();
+        if (buff != null)
+        {
+            buff.OnBuffColLision -= BoostAttack;
+        }
+
+        Projectile proj = other.GetComponent<Projectile>();
+        if (proj != null)
+        {
+            proj.OnPlayerCollision -= DamageRecieved;
+        }
     }
+    private bool isDead = false;
+
     private void Update()
     {
-        /////////////////////
-        if(health.Value <= 0)
+        if (health.Value <= 0 && !isDead && IsOwner)
         {
-            SimpleDespawn();
+            isDead = true;
+            StartCoroutine(ReSpawn());
         }
     }
     //*********************************************
     IEnumerator ReSpawn()
     {
-        SimpleDespawn();
         yield return new WaitForSeconds(3f);
-       //Instantiate(this.);
-
-
+        RespawnServerRpc();
     }
     void SimpleDespawn()
     {
@@ -172,6 +220,30 @@ public class SimplePlayerController : NetworkBehaviour
         print("Me e desconectado " + NetworkManager.Singleton.LocalClientId + " y se a guardado la data de" + accountID.Value);
     }
 
+    void RespawnPLayer()
+    {
+        var data = new PlayerData(accountID.Value.ToString(), GetRandomSpawnPosition(), health.Value = 100, attack.Value);
+        health.Value = 100;
+        SetData(data);
+        isDead = false;
+        GameManager.Instance.playerStatesByAccount[accountID.Value.ToString()] = data;
+    }
+    private Vector3 GetRandomSpawnPosition()
+    {
+        // Cambia estos valores según el tamaño de tu mapa
+        float x = UnityEngine.Random.Range(-7f, 7f);
+        float z = UnityEngine.Random.Range(-7f, 7f);
+        float y = 1f; // Altura adecuada para tu escenario
+        return new Vector3(x, y, z);
+    }
+    [Rpc(SendTo.Server)]
+    public void RespawnServerRpc()
+    {
+        health.Value = 100;
+        transform.position = GetRandomSpawnPosition();
+        isDead = false;
+        // Si quieres, actualiza el GameManager aquí también
+    }
 }
 public class PlayerData
 {

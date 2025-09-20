@@ -31,18 +31,21 @@ public class Projectile : NetworkBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (!IsServer) return;
-        if (other.gameObject.tag == "Wall"|| other.gameObject.tag == "buff" || other.gameObject.tag == "Ground")
+        if (other.gameObject.tag == "Wall" || other.gameObject.tag == "buff" || other.gameObject.tag == "Ground")
         {
             SimpleDespawn();
         }
-        else if(other.gameObject.tag == "Player" )
+        else if (other.gameObject.tag == "Player")
         {
-            if(other.gameObject != shooter)
+            if (other.gameObject != shooter)
             {
-                OnPlayerCollision?.Invoke(attackFromPlayer);
-                //SimpleDespawn();
+                var player = other.GetComponent<SimplePlayerController>();
+                if (player != null)
+                {
+                    player.DamageRecieved(attackFromPlayer);
+                }
+                SimpleDespawn();
             }
-            //OnPlayerCollision?.Invoke(attackFromPlayer);
         }
     }
 }

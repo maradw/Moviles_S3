@@ -31,6 +31,7 @@ public class RandomBuff : NetworkBehaviour
         print("Aplicar buff a " + playerID);
         GetComponent<NetworkObject>().Despawn(true);
     }
-   
 
+    public int GetAttackValue() => attackValue.Value;
+    public void TakeBuff() => GetComponent<NetworkObject>().Despawn(true);
 }
