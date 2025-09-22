@@ -9,6 +9,7 @@ public class Projectile : NetworkBehaviour
     public static event Action OnEnemyCollision;
    public int attackFromPlayer;
     public static event Action<int> OnPlayerCollision;
+   public GameObject shooter;
     void Start()
     {
         if (IsServer)
@@ -34,9 +35,11 @@ public class Projectile : NetworkBehaviour
         {
             SimpleDespawn();
         }
-        else if(other.gameObject.tag == "Player")
+        else if(other.gameObject.tag == "Player" && other.gameObject != shooter)
         {
-            OnPlayerCollision?.Invoke(attackFromPlayer);
+            
+          //  OnPlayerCollision?.Invoke(attackFromPlayer);
+            other.gameObject.GetComponent<SimplePlayerController>().DamageRecieved(attackFromPlayer);
         }
     }
 }

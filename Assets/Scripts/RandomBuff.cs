@@ -22,14 +22,17 @@ public class RandomBuff : NetworkBehaviour
         if(other.gameObject.tag== "Player")
         {
             AddBuffToPlayerRpc(NetworkManager.Singleton.LocalClientId);
-            OnBuffColLision?.Invoke(attackValue.Value);
+            //OnBuffColLision?.Invoke(attackValue.Value);
+            other.gameObject.GetComponent<SimplePlayerController>().BoostAttack(attackValue.Value);
         }
     }
     [Rpc(SendTo.Server)]
     private void AddBuffToPlayerRpc(ulong playerID)
     {
         print("Aplicar buff a " + playerID);
+       
         GetComponent<NetworkObject>().Despawn(true);
+
     }
    
 

@@ -1,5 +1,5 @@
-
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEditor.PackageManager;
@@ -74,18 +74,21 @@ public class GameManager : NetworkBehaviour
         {
             SpawnPlayerServer(ID, data);
         }
-    } 
-  
+    }
+
     public void SpawnPlayerServer(ulong ID, PlayerData data)
     {
         if (!IsServer) return;
-       GameObject player = Instantiate(playerprefab);
-        player.GetComponent<NetworkObject>().SpawnWithOwnership(ID, true);
-       
+
+        Vector3 spawnPos = data.position;
+        Debug.Log($"SpawnPlayerServer -> Instanciando jugador {ID} en {spawnPos}");
+
+        // Instanciar en la posición deseada ANTES de hacer SpawnWithOwnership
+        GameObject player = Instantiate(playerprefab, spawnPos, Quaternion.identity);
+        var netObj = player.GetComponent<NetworkObject>();
+        netObj.SpawnWithOwnership(ID, true);
 
         player.GetComponent<SimplePlayerController>().SetData(data);
-
-
     }
 
     /* [Rpc(SendTo.Server)]
@@ -98,7 +101,7 @@ public class GameManager : NetworkBehaviour
      }*/
     void Update()
     {
-        if (IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
+        /*if (IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
         {
             /* currentEnemy += Time.deltaTime;
 
@@ -111,8 +114,9 @@ public class GameManager : NetworkBehaviour
                  buff.GetComponent<NetworkObject>().Spawn(true);
                  currentEnemy = 0;
              }*/
-        }
+    
 
+        //waza
         if (IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
         {
             currentBuffCount += Time.deltaTime;
@@ -128,14 +132,54 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-    Vector3 Respawn()
+    public Vector3 Respawn()
     {
-        Vector3 rndRespawn = new Vector3(UnityEngine.Random.Range(-5, 5), 0.5f, UnityEngine.Random.Range(-5, 5));
+        Vector3 rndRespawn = new Vector3(UnityEngine.Random.Range(-6, 6), 0.5f, UnityEngine.Random.Range(-6, 6));
         return rndRespawn;
     }
     public void RegisterPlayer(GameObject player)
     {
         Players.Add(player);
+    }
+    public void StartRespawnForClient(ulong clientId, string accountID, bool isDeathRespawn = true)
+    {
+        StartCoroutine(RespawnCoroutine(clientId, accountID, isDeathRespawn));
+    }
+
+    private IEnumerator RespawnCoroutine(ulong clientId, string accountID, bool isDeath)
+    {
+        yield return new WaitForSeconds(3f);
+        RespawnPlayerForClient(clientId, accountID, isDeath);
+    }
+
+    public void RespawnPlayerForClient(ulong clientId, string accountID, bool porMuerte)
+    {
+        Debug.Log($"RespawnPlayerForClient llamado para {accountID} (clientId: {clientId}) porMuerte={porMuerte}");
+
+        // Asegurarnos de tener data (si no existe, crear con posición random)
+        if (!playerStatesByAccount.TryGetValue(accountID, out PlayerData data))
+        {
+            data = new PlayerData(accountID, Respawn(), 100, 5);
+            playerStatesByAccount[accountID] = data;
+            Debug.Log($"No existía data -> creada con posición inicial {data.position}");
+        }
+
+        if (porMuerte)
+        {
+            Vector3 rand = Respawn();
+            data.position = rand;
+            data.health = 100;
+            Debug.Log($"Por muerte: asignada posición random {rand}");
+        }
+        else
+        {
+            Debug.Log($"Por reconexión: usando posición guardada {data.position}");
+        }
+
+        // Instanciar EN la posición final que queremos que tenga el jugador
+        GameObject player = Instantiate(playerprefab, data.position, Quaternion.identity);
+        player.GetComponent<NetworkObject>().SpawnWithOwnership(clientId, true);
+        player.GetComponent<SimplePlayerController>().SetData(data);
     }
     public static GameManager Instance => instance;
 }
