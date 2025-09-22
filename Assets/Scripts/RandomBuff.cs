@@ -19,10 +19,9 @@ public class RandomBuff : NetworkBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        if(other.gameObject.tag== "Player")
+        if (other.gameObject.tag == "Player")
         {
             AddBuffToPlayerRpc(NetworkManager.Singleton.LocalClientId);
-            //OnBuffColLision?.Invoke(attackValue.Value);
             other.gameObject.GetComponent<SimplePlayerController>().BoostAttack(attackValue.Value);
         }
     }

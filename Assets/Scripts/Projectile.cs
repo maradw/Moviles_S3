@@ -38,7 +38,6 @@ public class Projectile : NetworkBehaviour
         else if(other.gameObject.tag == "Player" && other.gameObject != shooter)
         {
             
-          //  OnPlayerCollision?.Invoke(attackFromPlayer);
             other.gameObject.GetComponent<SimplePlayerController>().DamageRecieved(attackFromPlayer);
         }
     }

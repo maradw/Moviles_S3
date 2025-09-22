@@ -108,16 +108,7 @@ public class SimplePlayerController : NetworkBehaviour
         attack.Value += buffAttack;
         Debug.Log("current" + attack.Value);
     }
-    private void OnEnable()
-    {
-       // RandomBuff.OnBuffColLision += BoostAttack;
-      //  Projectile.OnPlayerCollision += DamageRecieved;
-    }
-    private void OnDisable()
-    {
-       // RandomBuff.OnBuffColLision -= BoostAttack;
-       // Projectile.OnPlayerCollision -= DamageRecieved;
-    }
+
     private void Update()
     {
         if (IsServer)
@@ -125,7 +116,6 @@ public class SimplePlayerController : NetworkBehaviour
             if (!isDead && health.Value <= 0)
             {
                 isDead = true;
-                // NO LLAMES SavePlayerState() aquí
                 ulong ownerId = GetComponent<NetworkObject>().OwnerClientId;
                 string accId = accountID.Value.ToString();
                 GameManager.Instance.StartRespawnForClient(ownerId, accId, true);
@@ -134,21 +124,6 @@ public class SimplePlayerController : NetworkBehaviour
         }
     }
 
-    IEnumerator RespawnProcess()
-    {
-        Debug.Log("Iniciando RespawnProcess para " + accountID.Value);
-        SavePlayerState();
-
-        ulong ownerId = GetComponent<NetworkObject>().OwnerClientId;
-        string accId = accountID.Value.ToString();
-
-        SimpleDespawn();
-
-        yield return new WaitForSeconds(3f);
-
-        // Aquí debe ser TRUE para respawn aleatorio por muerte
-        GameManager.Instance.RespawnPlayerForClient(ownerId, accId, true);
-    }
     void SimpleDespawn()
     {
         if (IsServer)
@@ -193,12 +168,6 @@ public class SimplePlayerController : NetworkBehaviour
         proj.GetComponent<Projectile>().attackFromPlayer = attack.Value;
         proj.GetComponent<NetworkObject>().Spawn(true);
         Debug.DrawRay(proj.transform.position, proj.transform.forward * 5, Color.red, 2f);
-    }
-
-    void SavePlayerState()
-    {
-        GameManager.Instance.playerStatesByAccount[accountID.Value.ToString()] =
-            new PlayerData(accountID.Value.ToString(), transform.position, health.Value, attack.Value);
     }
 
     public override void OnNetworkDespawn()
