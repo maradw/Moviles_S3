@@ -177,7 +177,13 @@ public class SimplePlayerController : NetworkBehaviour
             new PlayerData(accountID.Value.ToString(), transform.position, health.Value, attack.Value);
         print("Me e desconectado " + NetworkManager.Singleton.LocalClientId + " y se a guardado la data de" + accountID.Value);
     }
-
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            GameManager.Instance.SetCameraTarget(transform);
+        }
+    }
 }
 public class PlayerData
 {

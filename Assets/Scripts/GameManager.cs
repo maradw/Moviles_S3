@@ -2,9 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
-using UnityEditor.PackageManager;
 using UnityEngine;
-
+using Unity.Cinemachine;
 public class GameManager : NetworkBehaviour
 {
     private static GameManager instance;
@@ -17,6 +16,8 @@ public class GameManager : NetworkBehaviour
     public Action OnConnection;
     public List<GameObject> Players = new List<GameObject>();
     public Dictionary<string, PlayerData> playerStatesByAccount = new();
+    [SerializeField] CinemachineCamera cameraRef;
+
     void Awake()
     {
         if(Instance == null)
@@ -60,7 +61,11 @@ public class GameManager : NetworkBehaviour
             SpawnPlayerServer(ID, data);
         }
     }
-
+    public void SetCameraTarget(Transform playerTransform)
+    {
+        cameraRef.Follow = playerTransform;
+        cameraRef.LookAt = playerTransform;
+    }
     public void SpawnPlayerServer(ulong ID, PlayerData data)
     {
         if (!IsServer) return;
