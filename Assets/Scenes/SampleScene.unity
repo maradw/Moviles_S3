@@ -245,7 +245,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &121312640
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2059,7 +2059,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1832853913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2271,7 +2271,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1909658587
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2311,9 +2311,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerprefab: {fileID: 2076614573960409832, guid: 76c6ec737901f4d4a892d70a7517ad2d, type: 3}
-  randomBuff: {fileID: 5279249824556873427, guid: b2d49163bd703d94ea99a3514250cdbf, type: 3}
   Players: []
   cameraRef: {fileID: 121312642}
+  lobbySceneName: Lobby
+  gameplaySceneName: Gameplay
 --- !u!4 &1909658589
 Transform:
   m_ObjectHideFlags: 0
@@ -2448,7 +2449,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1922961017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2462,9 +2463,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  inputField: {fileID: 1579632875}
-  submitButton: {fileID: 400546298}
-  loginPanel: {fileID: 461621854}
+  readyToggle: {fileID: 0}
+  hostStartButton: {fileID: 0}
+  playersCountText: {fileID: 0}
 --- !u!4 &1922961018
 Transform:
   m_ObjectHideFlags: 0

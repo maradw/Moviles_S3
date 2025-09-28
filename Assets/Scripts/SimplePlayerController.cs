@@ -182,6 +182,7 @@ public class SimplePlayerController : NetworkBehaviour
         if (IsOwner)
         {
             GameManager.Instance.SetCameraTarget(transform);
+             ///GameManager.Instance.SpawnPlayerServer();
         }
     }
 }

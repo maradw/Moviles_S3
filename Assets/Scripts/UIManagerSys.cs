@@ -1,40 +1,127 @@
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
 using Unity.Netcode;
+using TMPro;
 public class UIManagerSys : NetworkBehaviour
 {
-    public TMP_InputField inputField;
-    public Button submitButton;
-    public GameObject loginPanel;
+    [Header("Lobby UI")]
+    [SerializeField] private Toggle readyToggle;
+    [SerializeField] private Button hostStartButton;
+    [SerializeField] private TextMeshProUGUI playersCountText;
+    [SerializeField] private GameObject lobbyPanel;
+
     void Start()
     {
-        submitButton.onClick.AddListener(OnSubmitName);
-        loginPanel.SetActive(false);
+        // Configuración básica de visibilidad
 
-        GameManager.Instance.OnConnection += () =>
+        /*if (hostStartButton != null)
         {
-            loginPanel.SetActive(true);
-            inputField.text = "";
-            submitButton.interactable = true;
-            inputField.interactable = true;
-        };
+            // Solo el Host (server) ve el botón de Start
+            hostStartButton.gameObject.SetActive(IsServer);
+            hostStartButton.onClick.RemoveAllListeners();
+            hostStartButton.onClick.AddListener(OnClickStart);
+        }
+        if (readyToggle != null)
+        {
+            readyToggle.onValueChanged.RemoveAllListeners();
+            readyToggle.onValueChanged.AddListener(OnToggleReady);
+        }
 
-
+        // Primera actualización
+        UpdateLobbyUI();*/
+        lobbyPanel.SetActive(true);
     }
+    public override void OnNetworkSpawn()
+    {
+        /* base.OnNetworkSpawn();
+         if (IsClient && IsOwner)
+         {
+             if (readyToggle != null)
+             {
+                 readyToggle.gameObject.SetActive(true);
+             }
+         }
+         if (IsServer)
+         {
+             if (hostStartButton != null)
+             {
+                 hostStartButton.gameObject.SetActive(true);
+                 hostStartButton.onClick.RemoveAllListeners();
+                 hostStartButton.onClick.AddListener(OnClickStart);
+             }
+         }*/
+        if (hostStartButton != null)
+        {
+            // Solo el Host (server) ve el botón de Start
+            hostStartButton.gameObject.SetActive(IsServer);
+            hostStartButton.onClick.RemoveAllListeners();
+            hostStartButton.onClick.AddListener(OnClickStart);
+        }
+        if (readyToggle != null)
+        {
+            readyToggle.onValueChanged.RemoveAllListeners();
+            readyToggle.onValueChanged.AddListener(OnToggleReady);
+        }
+
+        // Primera actualización
+        UpdateLobbyUI();
+        lobbyPanel.SetActive(false);
+    }
+
     void Update()
     {
-
+        // Actualizaciones simples de UI (contador e interactuabilidad del Start)
+        UpdateLobbyUI();
     }
-    void OnSubmitName()
+
+    private void UpdateLobbyUI()
     {
-        string accountID = inputField.text;
-        if (!string.IsNullOrEmpty(accountID))
+        var gm = GameManager.Instance;
+        if (gm == null || gm.LobbyPlayers == null) return;
+
+        if (playersCountText != null)
         {
-            GameManager.Instance.RegisterPlayerServerRpc(accountID, NetworkManager.Singleton.LocalClientId);
-            submitButton.interactable = false;
-            inputField.interactable = false;
-            loginPanel.SetActive(false);
+            playersCountText.text = $"{gm.LobbyPlayers.Count}/{GameManager.MaxLobbyPlayers}";
+        }
+
+        if (hostStartButton != null)
+        {
+            bool allReady = true;
+            if (gm.LobbyPlayers.Count == 0) allReady = false;
+            else
+            {
+                for (int i = 0; i < gm.LobbyPlayers.Count; i++)
+                {
+                    if (!gm.LobbyPlayers[i].Ready)
+                    {
+                        allReady = false;
+                        break;
+                    }
+                }
+            }
+
+            hostStartButton.interactable = IsServer && allReady;
+        }
+    }
+
+    // UI -> Network RPCs
+    private void OnToggleReady(bool isOn)
+    {
+        if (!IsClient) return;
+        var gm = GameManager.Instance;
+        if (gm != null)
+        {
+            gm.SetReadyRpc(isOn);
+        }
+    }
+
+    private void OnClickStart()
+    {
+        if (!IsClient) return;
+        var gm = GameManager.Instance;
+        if (gm != null)
+        {
+            gm.RequestStartGameRpc();
         }
     }
 }
