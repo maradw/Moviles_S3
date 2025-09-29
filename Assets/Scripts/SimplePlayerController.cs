@@ -17,13 +17,14 @@ public class SimplePlayerController : NetworkBehaviour
     [SerializeField] Transform firePoint;
     [SerializeField] GameObject projectilePrefab;
     Vector2 position;
-    /* [SerializeField] NetworkVariable<int> life = new NetworkVariable<int>(100);
-     [SerializeField] NetworkVariable<int> attack = new NetworkVariable<int>(20);*/
+
+    private bool isDead = false;
     public void OnClick(InputAction.CallbackContext click)
     {
         if (!IsOwner) return;
         if (click.performed)
         {
+            animator.SetTrigger("Attack");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
@@ -33,10 +34,7 @@ public class SimplePlayerController : NetworkBehaviour
                 Vector3 shootDirection = (targetPoint - firePoint.position).normalized;
 
                 ShootRpc(shootDirection);
-                //Debug.Log("a: " + shootDirection);
             }
-
-           // Debug.Log("has clicked");
         }
 
     }
@@ -49,6 +47,7 @@ public class SimplePlayerController : NetworkBehaviour
         accountID.Value = playerData.accountID;
         health.Value = playerData.health;
         attack.Value = playerData.attack;
+        Debug.Log("SetData: posicion asignada = " + playerData.position);
         transform.position = playerData.position;
     }
     void Start()
@@ -63,7 +62,7 @@ public class SimplePlayerController : NetworkBehaviour
     {
         if (jump.performed && canJump == true)
         {
-            JumpSetTriggerRpc("Jump");
+            JumpSetTriggerRpc("JumpOneTake");
             myRBD.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             canJump = false;
         }
@@ -72,6 +71,8 @@ public class SimplePlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
         direction = move.ReadValue<Vector2>();
+        float currentSpeed = direction.magnitude;
+        animator.SetFloat("Speed", currentSpeed);
     }
 
     [Rpc(SendTo.Server)]
@@ -84,48 +85,67 @@ public class SimplePlayerController : NetworkBehaviour
         if (context.performed)
         {
             if (!IsOwner) return;
+            AttackSetBoolRpc("Attack", true);
+
         }
-        
+        if (context.canceled)
+        {
+            if (!IsOwner) return;
+            AttackSetBoolRpc("Attack", false);
+        }
+
     }
-    void DamageRecieved(int damage)
+    [Rpc(SendTo.Server)]
+    public void AttackSetBoolRpc(string animationName, bool state)
+    {
+        animator.SetBool(animationName, state);
+    }
+    public void DamageRecieved(int damage)
     {
         health.Value -= damage;
     }
-    void BoostAttack(int buffAttack)
-    {//////////////////
-        attack.Value += buffAttack;
-        Debug .Log("current" + attack.Value);
-    }
-    private void OnEnable()
-    {
-        RandomBuff.OnBuffColLision += BoostAttack;
-        Projectile.OnPlayerCollision += DamageRecieved;
-    }
-    private void OnDisable()
-    {
-        RandomBuff.OnBuffColLision -= BoostAttack;
-        Projectile.OnPlayerCollision -= DamageRecieved;
-    }
-    private void Update()
-    {
-        /////////////////////
-        if(health.Value <= 0)
+   public void BoostAttack(int buffAttack)
+   {
+       if (IsServer)
         {
-            SimpleDespawn();
+            attack.Value += buffAttack;
+            Debug.Log("current" + attack.Value);
+        }
+        else
+        {
+            BoostAttackServerRpc(buffAttack);
         }
     }
-    //*********************************************
-    IEnumerator ReSpawn()
+
+    [Rpc(SendTo.Server)]
+    private void BoostAttackServerRpc(int buffAttack)
     {
-        SimpleDespawn();
-        yield return new WaitForSeconds(3f);
-       //Instantiate(this.);
-
-
+        attack.Value += buffAttack;
+        Debug.Log("current" + attack.Value);
     }
+
+    private void Update()
+    {
+        if (IsServer)
+        {
+            if (!isDead && health.Value <= 0)
+            {
+                isDead = true;
+                ulong ownerId = GetComponent<NetworkObject>().OwnerClientId;
+                string accId = accountID.Value.ToString();
+                GameManager.Instance.StartRespawnForClient(ownerId, accId, true);
+                SimpleDespawn();
+            }
+        }
+    }
+
     void SimpleDespawn()
     {
-        GetComponent<NetworkObject>().Despawn(true);
+        if (IsServer)
+        {
+            GetComponent<NetworkObject>().Despawn(true);
+        }
+            
     }
     private void FixedUpdate()
     {
@@ -159,6 +179,7 @@ public class SimplePlayerController : NetworkBehaviour
     {
         Quaternion lookRotation = Quaternion.LookRotation(mouseDirection);
         GameObject proj = Instantiate(projectilePrefab, firePoint.position, lookRotation);
+        proj.GetComponent<Projectile>().shooter = this.gameObject;
         proj.GetComponent<Projectile>().attackFromPlayer = attack.Value;
         proj.GetComponent<Projectile>().shooter = this.gameObject;
         proj.GetComponent<NetworkObject>().Spawn(true);
@@ -168,10 +189,17 @@ public class SimplePlayerController : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         print ("desconnected" + NetworkManager.Singleton.LocalClientId);
-        GameManager.Instance.playerStatesByAccount[accountID.Value.ToString()] = new PlayerData(accountID.Value.ToString(), transform.position, health.Value, attack.Value);
+        GameManager.Instance.playerStatesByAccount[accountID.Value.ToString()] =
+            new PlayerData(accountID.Value.ToString(), transform.position, health.Value, attack.Value);
         print("Me e desconectado " + NetworkManager.Singleton.LocalClientId + " y se a guardado la data de" + accountID.Value);
     }
-
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            GameManager.Instance.SetCameraTarget(transform);
+        }
+    }
 }
 public class PlayerData
 {

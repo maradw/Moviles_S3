@@ -35,14 +35,10 @@ public class Projectile : NetworkBehaviour
         {
             SimpleDespawn();
         }
-        else if(other.gameObject.tag == "Player" )
+        else if(other.gameObject.tag == "Player" && other.gameObject != shooter)
         {
-            if(other.gameObject != shooter)
-            {
-                OnPlayerCollision?.Invoke(attackFromPlayer);
-                //SimpleDespawn();
-            }
-            //OnPlayerCollision?.Invoke(attackFromPlayer);
+            
+            other.gameObject.GetComponent<SimplePlayerController>().DamageRecieved(attackFromPlayer);
         }
     }
 }
