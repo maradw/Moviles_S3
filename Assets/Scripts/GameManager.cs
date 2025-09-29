@@ -5,8 +5,6 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Cinemachine;
-
-// Estado del jugador en el lobby
 public struct LobbyPlayerState : INetworkSerializable, IEquatable<LobbyPlayerState>
 {
     public ulong ClientId;
@@ -39,9 +37,7 @@ public class GameManager : NetworkBehaviour
     public Dictionary<string, PlayerData> playerStatesByAccount = new();
     [SerializeField] CinemachineCamera cameraRef;
 
-    // Lobby
     public const int MaxLobbyPlayers = 5;
-    // FIX: inicializar la NetworkList aquí
     public NetworkList<LobbyPlayerState> LobbyPlayers = new NetworkList<LobbyPlayerState>();
     [SerializeField] private string lobbySceneName = "Lobby";
     [SerializeField] private string gameplaySceneName = "GameScene";
@@ -61,7 +57,6 @@ public class GameManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // LobbyPlayers ya está inicializada en la declaración del campo
 
         if (IsServer)
         {
@@ -94,16 +89,12 @@ public class GameManager : NetworkBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer) return;
-
-        // Limitar a 5 jugadores
         if (LobbyPlayers.Count >= MaxLobbyPlayers)
         {
             NetworkManager.Singleton.DisconnectClient(clientId);
-            Debug.Log($"Lobby lleno. Cliente rechazado: {clientId}");
+            Debug.Log("Lobby lleno. Cliente rechazado" + clientId);
             return;
         }
-
-        // Evitar duplicados (reconexiones/eventos)
         for (int i = 0; i < LobbyPlayers.Count; i++)
         {
             if (LobbyPlayers[i].ClientId == clientId)
@@ -111,7 +102,6 @@ public class GameManager : NetworkBehaviour
         }
 
         LobbyPlayers.Add(new LobbyPlayerState(clientId, false));
-        Debug.Log($"Cliente conectado al lobby: {clientId}");
     }
 
     private void HandleDisconnect(ulong clientID)
@@ -119,8 +109,6 @@ public class GameManager : NetworkBehaviour
         print("El jugador" + clientID + "Se a desconectado");
 
         if (!IsServer) return;
-
-        // Quitar del lobby
         for (int i = 0; i < LobbyPlayers.Count; i++)
         {
             if (LobbyPlayers[i].ClientId == clientID)
@@ -163,20 +151,11 @@ public class GameManager : NetworkBehaviour
         player.GetComponent<SimplePlayerController>().SetData(data);
     }
 
-    void Update()
-    {
-        if (IsServer && NetworkManager.Singleton.ConnectedClients.Count >= 2)
-        {
-
-        }
-    }
-
     public Vector3 Respawn()
     {
         Vector3 rndRespawn = new Vector3(UnityEngine.Random.Range(-6, 6), 0.5f, UnityEngine.Random.Range(-6, 6));
         return rndRespawn;
     }
-
     public void StartRespawnForClient(ulong clientId, string accountID, bool isDeathRespawn = true)
     {
         StartCoroutine(RespawnCoroutine(clientId, accountID, isDeathRespawn));
@@ -207,8 +186,6 @@ public class GameManager : NetworkBehaviour
         player.GetComponent<NetworkObject>().SpawnWithOwnership(clientId, true);
         player.GetComponent<SimplePlayerController>().SetData(data);
     }
-
-    // ====== LOBBY RPCS ======
 
     [Rpc(SendTo.Server)]
     public void SetReadyRpc(bool ready, RpcParams rpcParams = default)
@@ -243,14 +220,12 @@ public class GameManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // Solo el Host (server) tiene el "visto final"
         if (rpcParams.Receive.SenderClientId != NetworkManager.ServerClientId)
         {
             Debug.Log("Solo el Host puede iniciar la partida.");
             return;
         }
 
-        // Requiere que todos estén listos
         if (!AreAllPlayersReady())
         {
             Debug.Log("No todos los jugadores están listos.");
@@ -262,21 +237,15 @@ public class GameManager : NetworkBehaviour
             Debug.LogError("Gameplay Scene Name no asignado en GameManager.");
             return;
         }
-
-        // Cargar escena de juego en red
         NetworkManager.SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
     }
-
-    // Cuando termine de cargar la escena en red, hacemos spawn de los players
     private void OnLoadEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!IsServer) return;
         if (!string.Equals(sceneName, gameplaySceneName, StringComparison.Ordinal)) return;
 
-        // Spawnear un player por cliente conectado
         foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            // Intentar usar PlayerData conocido; si no hay, crear por defecto con accountId basado en clientId
             string accId = clientId.ToString();
             if (!playerStatesByAccount.TryGetValue(accId, out var data))
             {

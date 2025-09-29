@@ -24,6 +24,7 @@ public class SimplePlayerController : NetworkBehaviour
         if (!IsOwner) return;
         if (click.performed)
         {
+            animator.SetTrigger("Attack");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
@@ -61,7 +62,7 @@ public class SimplePlayerController : NetworkBehaviour
     {
         if (jump.performed && canJump == true)
         {
-            JumpSetTriggerRpc("Jump");
+            JumpSetTriggerRpc("JumpOneTake");
             myRBD.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             canJump = false;
         }
@@ -70,6 +71,8 @@ public class SimplePlayerController : NetworkBehaviour
     {
         if (!IsOwner) return;
         direction = move.ReadValue<Vector2>();
+        float currentSpeed = direction.magnitude;
+        animator.SetFloat("Speed", currentSpeed);
     }
 
     [Rpc(SendTo.Server)]
@@ -82,8 +85,20 @@ public class SimplePlayerController : NetworkBehaviour
         if (context.performed)
         {
             if (!IsOwner) return;
+            AttackSetBoolRpc("Attack", true);
+
         }
-        
+        if (context.canceled)
+        {
+            if (!IsOwner) return;
+            AttackSetBoolRpc("Attack", false);
+        }
+
+    }
+    [Rpc(SendTo.Server)]
+    public void AttackSetBoolRpc(string animationName, bool state)
+    {
+        animator.SetBool(animationName, state);
     }
     public void DamageRecieved(int damage)
     {
@@ -182,7 +197,6 @@ public class SimplePlayerController : NetworkBehaviour
         if (IsOwner)
         {
             GameManager.Instance.SetCameraTarget(transform);
-             ///GameManager.Instance.SpawnPlayerServer();
         }
     }
 }

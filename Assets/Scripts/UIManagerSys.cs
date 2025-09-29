@@ -12,47 +12,12 @@ public class UIManagerSys : NetworkBehaviour
 
     void Start()
     {
-        // Configuración básica de visibilidad
-
-        /*if (hostStartButton != null)
-        {
-            // Solo el Host (server) ve el botón de Start
-            hostStartButton.gameObject.SetActive(IsServer);
-            hostStartButton.onClick.RemoveAllListeners();
-            hostStartButton.onClick.AddListener(OnClickStart);
-        }
-        if (readyToggle != null)
-        {
-            readyToggle.onValueChanged.RemoveAllListeners();
-            readyToggle.onValueChanged.AddListener(OnToggleReady);
-        }
-
-        // Primera actualización
-        UpdateLobbyUI();*/
         lobbyPanel.SetActive(true);
     }
     public override void OnNetworkSpawn()
     {
-        /* base.OnNetworkSpawn();
-         if (IsClient && IsOwner)
-         {
-             if (readyToggle != null)
-             {
-                 readyToggle.gameObject.SetActive(true);
-             }
-         }
-         if (IsServer)
-         {
-             if (hostStartButton != null)
-             {
-                 hostStartButton.gameObject.SetActive(true);
-                 hostStartButton.onClick.RemoveAllListeners();
-                 hostStartButton.onClick.AddListener(OnClickStart);
-             }
-         }*/
         if (hostStartButton != null)
         {
-            // Solo el Host (server) ve el botón de Start
             hostStartButton.gameObject.SetActive(IsServer);
             hostStartButton.onClick.RemoveAllListeners();
             hostStartButton.onClick.AddListener(OnClickStart);
@@ -62,15 +27,12 @@ public class UIManagerSys : NetworkBehaviour
             readyToggle.onValueChanged.RemoveAllListeners();
             readyToggle.onValueChanged.AddListener(OnToggleReady);
         }
-
-        // Primera actualización
         UpdateLobbyUI();
         lobbyPanel.SetActive(false);
     }
 
     void Update()
-    {
-        // Actualizaciones simples de UI (contador e interactuabilidad del Start)
+    {     
         UpdateLobbyUI();
     }
 
@@ -103,8 +65,6 @@ public class UIManagerSys : NetworkBehaviour
             hostStartButton.interactable = IsServer && allReady;
         }
     }
-
-    // UI -> Network RPCs
     private void OnToggleReady(bool isOn)
     {
         if (!IsClient) return;
