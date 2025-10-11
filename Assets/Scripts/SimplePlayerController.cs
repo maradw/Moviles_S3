@@ -24,7 +24,7 @@ public class SimplePlayerController : NetworkBehaviour
         if (!IsOwner) return;
         if (click.performed)
         {
-            animator.SetTrigger("Attack");
+           // animator.SetTrigger("Attack");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
 
